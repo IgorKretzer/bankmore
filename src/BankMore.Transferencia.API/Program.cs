@@ -1,0 +1,170 @@
+using BankMore.Transferencia.API.Middleware;
+using BankMore.Transferencia.Domain.Handlers;
+using BankMore.Transferencia.Domain.Interfaces;
+using BankMore.Transferencia.Infrastructure.Data;
+using BankMore.Transferencia.Infrastructure.Services;
+using BankMore.Shared.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.Sqlite;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using KafkaFlow;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Database
+builder.Services.AddScoped<IDbConnectionFactory>(_ => 
+    new SqliteConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")!));
+
+// Repositories
+builder.Services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
+
+// Services
+builder.Services.AddHttpClient<IContaCorrenteService, ContaCorrenteService>();
+
+// Message Producer (mock implementation)
+builder.Services.AddScoped<BankMore.Transferencia.Domain.Interfaces.IMessageProducer, MockMessageProducer>();
+
+// Kafka (comentado por enquanto)
+// builder.Services.AddKafka(kafka => kafka
+//     .UseConsoleLog()
+//     .AddCluster(cluster => cluster
+//         .WithBrokers(new[] { "localhost:9092" })
+//         .AddProducer(producer => producer
+//             .DefaultTopic("transferencias-realizadas")
+//             .AddMiddlewares(middlewares => middlewares
+//                 .AddSerializer<JsonSerializer>()
+//             )
+//         )
+//     )
+// );
+
+// MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EfetuarTransferenciaHandler).Assembly));
+
+// JWT
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"]!;
+var issuer = jwtSettings["Issuer"]!;
+var audience = jwtSettings["Audience"]!;
+
+builder.Services.AddSingleton(new JwtTokenGenerator(secretKey, issuer, audience));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey)),
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Custom middleware
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.MapControllers();
+
+// Start Kafka
+// Kafka (comentado por enquanto)
+// var bus = app.Services.CreateKafkaBus();
+// await bus.StartAsync();
+
+// Initialize database
+using (var scope = app.Services.CreateScope())
+{
+    var connectionString = app.Configuration.GetConnectionString("DefaultConnection")!;
+    using var connection = new SqliteConnection(connectionString);
+    connection.Open();
+    
+    // Execute SQL scripts
+    var sqlScripts = new[]
+    {
+        File.ReadAllText("../../contacorrente.sql"),
+        File.ReadAllText("../../transferencia.sql"),
+        File.ReadAllText("../../tarifas.sql")
+    };
+    
+    foreach (var script in sqlScripts)
+    {
+        try
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = script;
+            command.ExecuteNonQuery();
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("already exists"))
+        {
+            // Tabela já existe, continuar
+            Console.WriteLine($"Tabela já existe: {ex.Message}");
+        }
+    }
+}
+
+app.Run();
+
+public interface IDbConnectionFactory
+{
+    SqliteConnection CreateConnection();
+}
+
+public class SqliteConnectionFactory : IDbConnectionFactory
+{
+    private readonly string _connectionString;
+
+    public SqliteConnectionFactory(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
+    public SqliteConnection CreateConnection()
+    {
+        return new SqliteConnection(_connectionString);
+    }
+}
+
+public class MockMessageProducer : BankMore.Transferencia.Domain.Interfaces.IMessageProducer
+{
+    public Task ProduceAsync<T>(string topic, T message)
+    {
+        Console.WriteLine($"Mock: Produzindo mensagem no tópico '{topic}': {message}");
+        return Task.CompletedTask;
+    }
+}

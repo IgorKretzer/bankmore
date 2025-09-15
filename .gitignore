@@ -1,0 +1,62 @@
+# Arquivos de documentação para entrevista (não subir para Git)
+GUIA-DEMONSTRACAO.md
+INSTRUCOES.md
+RESUMO-EXECUTIVO.md
+ROTEIRO-ENTREVISTA.md
+TESTE-APIS-THUNDER-CLIENT.md
+Teste-Desenvolvedor-CSharp-API-v4.docx
+
+# Arquivos de build
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+*.exe
+
+# Arquivos de configuração do Visual Studio
+.vs/
+*.sln.docstates
+*.userprefs
+
+# Arquivos de banco de dados
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+*~
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de NuGet
+packages/
+*.nupkg
+
+# Arquivos de teste
+TestResults/
+*.trx
+*.coverage
+
+# Arquivos de Docker
+.dockerignore
+
+# Arquivos de configuração local
+appsettings.Development.json
+appsettings.Local.json

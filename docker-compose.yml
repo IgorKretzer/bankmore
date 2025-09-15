@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Banco de dados SQLite (usando volume para persistência)
+  database:
+    image: alpine:latest
+    volumes:
+      - ./data:/data
+    command: sh -c "echo 'Database volume mounted' && sleep infinity"
+
+  # API Conta Corrente
+  conta-corrente-api:
+    build:
+      context: .
+      dockerfile: src/BankMore.ContaCorrente.API/Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Data Source=/data/bankmore.db
+    volumes:
+      - ./data:/data
+      - ./contacorrente.sql:/app/contacorrente.sql
+      - ./transferencia.sql:/app/transferencia.sql
+      - ./tarifas.sql:/app/tarifas.sql
+    depends_on:
+      - database
+
+  # API Transferência
+  transferencia-api:
+    build:
+      context: .
+      dockerfile: src/BankMore.Transferencia.API/Dockerfile
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Data Source=/data/bankmore.db
+      - ContaCorrenteApi__BaseUrl=http://conta-corrente-api:8080
+    volumes:
+      - ./data:/data
+      - ./contacorrente.sql:/app/contacorrente.sql
+      - ./transferencia.sql:/app/transferencia.sql
+      - ./tarifas.sql:/app/tarifas.sql
+    depends_on:
+      - database
+      - conta-corrente-api
+      - kafka
+
+  # API Tarifas
+  tarifas-api:
+    build:
+      context: .
+      dockerfile: src/BankMore.Tarifas.API/Dockerfile
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Data Source=/data/bankmore.db
+      - Tarifas__ValorTransferencia=2.00
+    volumes:
+      - ./data:/data
+      - ./contacorrente.sql:/app/contacorrente.sql
+      - ./transferencia.sql:/app/transferencia.sql
+      - ./tarifas.sql:/app/tarifas.sql
+    depends_on:
+      - database
+      - kafka
+
+  # Kafka (para futuras implementações)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+volumes:
+  data:
