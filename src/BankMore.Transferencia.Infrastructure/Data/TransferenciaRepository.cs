@@ -9,11 +9,11 @@ namespace BankMore.Transferencia.Infrastructure.Data;
 
 public class TransferenciaRepository : ITransferenciaRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     public TransferenciaRepository(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        connectionString = configuration.GetConnectionString("DefaultConnection")!;
     }
 
     public async Task<TransferenciaEntity?> ObterPorIdAsync(string id)
@@ -23,7 +23,7 @@ public class TransferenciaRepository : ITransferenciaRepository
             FROM transferencia 
             WHERE IdTransferencia = @Id";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<TransferenciaDto>(sql, new { Id = id });
         
         return result?.ToEntity();
@@ -32,10 +32,10 @@ public class TransferenciaRepository : ITransferenciaRepository
     public async Task SalvarAsync(TransferenciaEntity transferencia)
     {
         const string sql = @"
-            INSERT INTO transferencia (IdTransferencia, IdContaCorrente_Origem, IdContaCorrente_Destino, DataMovimento, Valor)
+            INSERT INTO transferencia (IdTransferencia, IdContaCorrenteOrigem, IdContaCorrenteDestino, DataMovimento, Valor)
             VALUES (@IdTransferencia, @IdContaCorrenteOrigem, @IdContaCorrenteDestino, @DataTransferencia, @Valor)";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             IdTransferencia = transferencia.IdTransferencia,

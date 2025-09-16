@@ -8,11 +8,11 @@ namespace BankMore.ContaCorrente.Infrastructure.Data;
 
 public class MovimentoRepository : IMovimentoRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     public MovimentoRepository(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        connectionString = configuration.GetConnectionString("DefaultConnection")!;
     }
 
     public async Task SalvarAsync(Movimento movimento)
@@ -21,7 +21,7 @@ public class MovimentoRepository : IMovimentoRepository
             INSERT INTO movimento (IdMovimento, IdContaCorrente, DataMovimento, TipoMovimento, Valor)
             VALUES (@IdMovimento, @IdContaCorrente, @DataMovimento, @TipoMovimento, @Valor)";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             IdMovimento = movimento.IdMovimento,
@@ -40,7 +40,7 @@ public class MovimentoRepository : IMovimentoRepository
             WHERE IdContaCorrente = @IdContaCorrente
             ORDER BY DataMovimento";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var results = await connection.QueryAsync<MovimentoDto>(sql, new { IdContaCorrente = idContaCorrente });
         
         return results.Select(dto => dto.ToEntity());
@@ -50,7 +50,7 @@ public class MovimentoRepository : IMovimentoRepository
     {
         const string sql = "SELECT COUNT(1) FROM movimento WHERE IdMovimento = @IdMovimento";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var count = await connection.QuerySingleAsync<int>(sql, new { IdMovimento = idMovimento });
         
         return count > 0;

@@ -8,13 +8,13 @@ namespace BankMore.ContaCorrente.Domain.Handlers;
 
 public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
-    private readonly IContaCorrenteRepository _contaRepository;
-    private readonly JwtTokenGenerator _jwtGenerator;
+    private readonly IContaCorrenteRepository contaRepository;
+    private readonly JwtTokenGenerator jwtGenerator;
 
     public LoginHandler(IContaCorrenteRepository contaRepository, JwtTokenGenerator jwtGenerator)
     {
-        _contaRepository = contaRepository;
-        _jwtGenerator = jwtGenerator;
+        this.contaRepository = contaRepository;
+        this.jwtGenerator = jwtGenerator;
     }
 
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -23,18 +23,18 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
         
         if (conta == null)
         {
-            return Result<LoginResponse>.Failure("Conta não encontrada", ErrorTypes.INVALID_ACCOUNT);
+            return Result<LoginResponse>.Failure("Conta não encontrada", ErrorTypes.INVALIDACCOUNT);
         }
 
         if (!conta.Ativo)
         {
-            return Result<LoginResponse>.Failure("Conta inativa", ErrorTypes.INACTIVE_ACCOUNT);
+            return Result<LoginResponse>.Failure("Conta inativa", ErrorTypes.INACTIVEACCOUNT);
         }
 
         var credenciaisValidas = ValidarCredenciais(conta, request.Senha);
         if (!credenciaisValidas)
         {
-            return Result<LoginResponse>.Failure("Senha inválida", ErrorTypes.USER_UNAUTHORIZED);
+            return Result<LoginResponse>.Failure("Senha inválida", ErrorTypes.USERUNAUTHORIZED);
         }
 
         var token = GerarTokenJwt(conta);
@@ -65,12 +65,12 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
     private async Task<Entities.ContaCorrente?> BuscarPorNumero(string identificacao)
     {
         var numeroConta = int.Parse(identificacao);
-        return await _contaRepository.ObterPorNumeroAsync(numeroConta);
+        return await contaRepository.ObterPorNumeroAsync(numeroConta);
     }
 
     private async Task<Entities.ContaCorrente?> BuscarPorCpf(string identificacao)
     {
-        return await _contaRepository.ObterPorCpfAsync(identificacao);
+        return await contaRepository.ObterPorCpfAsync(identificacao);
     }
 
     private bool ValidarCredenciais(Entities.ContaCorrente conta, string senha)
@@ -80,6 +80,6 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
 
     private string GerarTokenJwt(Entities.ContaCorrente conta)
     {
-        return _jwtGenerator.GenerateToken(conta.IdContaCorrente, conta.Numero.ToString());
+        return jwtGenerator.GenerateToken(conta.IdContaCorrente, conta.Numero.ToString());
     }
 }

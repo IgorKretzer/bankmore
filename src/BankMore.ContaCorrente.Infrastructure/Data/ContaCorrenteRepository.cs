@@ -10,13 +10,13 @@ namespace BankMore.ContaCorrente.Infrastructure.Data;
 
 public class ContaCorrenteRepository : IContaCorrenteRepository
 {
-    private readonly string _connectionString;
-    private readonly IMemoryCache _cache;
+    private readonly string connectionString;
+    private readonly IMemoryCache cache;
 
     public ContaCorrenteRepository(IConfiguration configuration, IMemoryCache cache)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        _cache = cache;
+        connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        this.cache = cache;
     }
 
     public async Task<ContaCorrenteEntity?> ObterPorIdAsync(string id)
@@ -26,7 +26,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
             FROM contacorrente 
             WHERE IdContaCorrente = @Id";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<ContaCorrenteDto>(sql, new { Id = id });
         
         return result?.ToEntity();
@@ -39,7 +39,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
             FROM contacorrente 
             WHERE Numero = @Numero";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<ContaCorrenteDto>(sql, new { Numero = numero });
         
         return result?.ToEntity();
@@ -53,7 +53,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
             FROM contacorrente 
             WHERE Nome LIKE @Cpf";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<ContaCorrenteDto>(sql, new { Cpf = $"%{cpf}%" });
         
         return result?.ToEntity();
@@ -63,7 +63,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
     {
         const string sql = "SELECT COALESCE(MAX(Numero), 0) + 1 FROM contacorrente";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         return await connection.QuerySingleAsync<int>(sql);
     }
 
@@ -73,7 +73,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
             INSERT INTO contacorrente (IdContaCorrente, Numero, Nome, Ativo, Senha, Salt)
             VALUES (@IdContaCorrente, @Numero, @Nome, @Ativo, @Senha, @Salt)";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             IdContaCorrente = conta.IdContaCorrente,
@@ -92,7 +92,7 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
             SET Ativo = @Ativo
             WHERE IdContaCorrente = @IdContaCorrente";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             IdContaCorrente = conta.IdContaCorrente,

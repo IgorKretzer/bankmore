@@ -7,34 +7,34 @@ namespace BankMore.ContaCorrente.Domain.Handlers;
 
 public class InativarContaHandler : IRequestHandler<InativarContaCommand, Result>
 {
-    private readonly IContaCorrenteRepository _contaRepository;
+    private readonly IContaCorrenteRepository contaRepository;
 
     public InativarContaHandler(IContaCorrenteRepository contaRepository)
     {
-        _contaRepository = contaRepository;
+        this.contaRepository = contaRepository;
     }
 
     public async Task<Result> Handle(InativarContaCommand request, CancellationToken cancellationToken)
     {
-        var conta = await _contaRepository.ObterPorIdAsync(request.IdContaCorrente);
+        var conta = await contaRepository.ObterPorIdAsync(request.IdContaCorrente);
         
         if (conta == null)
         {
-            return Result.Failure("Conta não encontrada", ErrorTypes.INVALID_ACCOUNT);
+            return Result.Failure("Conta não encontrada", ErrorTypes.INVALIDACCOUNT);
         }
 
         if (!conta.VerificarSenha(request.Senha, conta.Senha, conta.Salt))
         {
-            return Result.Failure("Senha inválida", ErrorTypes.USER_UNAUTHORIZED);
+            return Result.Failure("Senha inválida", ErrorTypes.USERUNAUTHORIZED);
         }
 
         if (!conta.Ativo)
         {
-            return Result.Failure("Conta já está inativa", ErrorTypes.INACTIVE_ACCOUNT);
+            return Result.Failure("Conta já está inativa", ErrorTypes.INACTIVEACCOUNT);
         }
 
         conta.Inativar();
-        await _contaRepository.AtualizarAsync(conta);
+        await contaRepository.AtualizarAsync(conta);
 
         return Result.Success();
     }

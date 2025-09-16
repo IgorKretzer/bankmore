@@ -9,15 +9,15 @@ namespace BankMore.Transferencia.Infrastructure.Services;
 
 public class ContaCorrenteService : IContaCorrenteService
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<ContaCorrenteService> _logger;
+    private readonly HttpClient httpClient;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<ContaCorrenteService> logger;
 
     public ContaCorrenteService(HttpClient httpClient, IConfiguration configuration, ILogger<ContaCorrenteService> logger)
     {
-        _httpClient = httpClient;
-        _configuration = configuration;
-        _logger = logger;
+        this.httpClient = httpClient;
+        this.configuration = configuration;
+        this.logger = logger;
     }
 
     public async Task<Result> RealizarDebitoAsync(string idRequisicao, string idContaCorrente, decimal valor, string token)
@@ -34,11 +34,11 @@ public class ContaCorrenteService : IContaCorrenteService
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _httpClient.DefaultRequestHeaders.Authorization = 
+            httpClient.DefaultRequestHeaders.Authorization = 
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var baseUrl = _configuration["ContaCorrenteApi:BaseUrl"] ?? "http://localhost:5001";
-            var response = await _httpClient.PostAsync($"{baseUrl}/api/ContaCorrente/movimentar", content);
+            var baseUrl = configuration["ContaCorrenteApi:BaseUrl"] ?? "http://localhost:5001";
+            var response = await httpClient.PostAsync($"{baseUrl}/api/ContaCorrente/movimentar", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -46,14 +46,14 @@ public class ContaCorrenteService : IContaCorrenteService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError("Erro ao realizar débito: {Error}", errorContent);
+            logger.LogError("Erro ao realizar débito: {Error}", errorContent);
 
-            return Result.Failure("Falha ao realizar débito", ErrorTypes.TRANSFER_FAILED);
+            return Result.Failure("Falha ao realizar débito", ErrorTypes.TRANSFERFAILED);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao realizar débito");
-            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNAL_ERROR);
+            logger.LogError(ex, "Erro ao realizar débito");
+            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNALERROR);
         }
     }
 
@@ -72,11 +72,11 @@ public class ContaCorrenteService : IContaCorrenteService
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            _httpClient.DefaultRequestHeaders.Authorization = 
+            httpClient.DefaultRequestHeaders.Authorization = 
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var baseUrl = _configuration["ContaCorrenteApi:BaseUrl"] ?? "http://localhost:5001";
-            var response = await _httpClient.PostAsync($"{baseUrl}/api/ContaCorrente/movimentar", content);
+            var baseUrl = configuration["ContaCorrenteApi:BaseUrl"] ?? "http://localhost:5001";
+            var response = await httpClient.PostAsync($"{baseUrl}/api/ContaCorrente/movimentar", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -84,14 +84,14 @@ public class ContaCorrenteService : IContaCorrenteService
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError("Erro ao realizar crédito: {Error}", errorContent);
+            logger.LogError("Erro ao realizar crédito: {Error}", errorContent);
 
-            return Result.Failure("Falha ao realizar crédito", ErrorTypes.TRANSFER_FAILED);
+            return Result.Failure("Falha ao realizar crédito", ErrorTypes.TRANSFERFAILED);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao realizar crédito");
-            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNAL_ERROR);
+            logger.LogError(ex, "Erro ao realizar crédito");
+            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNALERROR);
         }
     }
 }

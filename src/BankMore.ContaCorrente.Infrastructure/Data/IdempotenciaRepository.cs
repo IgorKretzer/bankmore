@@ -8,30 +8,30 @@ namespace BankMore.ContaCorrente.Infrastructure.Data;
 
 public class IdempotenciaRepository : IIdempotenciaRepository
 {
-    private readonly string _connectionString;
-    private readonly IMemoryCache _cache;
+    private readonly string connectionString;
+    private readonly IMemoryCache cache;
 
     public IdempotenciaRepository(IConfiguration configuration, IMemoryCache cache)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        _cache = cache;
+        connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        this.cache = cache;
     }
 
     public async Task<string?> ObterResultadoAsync(string chaveIdempotencia)
     {
-        if (_cache.TryGetValue(chaveIdempotencia, out string? cachedResult))
+        if (cache.TryGetValue(chaveIdempotencia, out string? cachedResult))
         {
             return cachedResult;
         }
 
-        const string sql = "SELECT Resultado FROM idempotencia WHERE Chave_Idempotencia = @Chave";
+        const string sql = "SELECT Resultado FROM idempotencia WHERE ChaveIdempotencia = @Chave";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<string>(sql, new { Chave = chaveIdempotencia });
         
         if (!string.IsNullOrEmpty(result))
         {
-            _cache.Set(chaveIdempotencia, result, TimeSpan.FromHours(1));
+            cache.Set(chaveIdempotencia, result, TimeSpan.FromHours(1));
         }
 
         return result;
@@ -40,10 +40,10 @@ public class IdempotenciaRepository : IIdempotenciaRepository
     public async Task SalvarAsync(string chaveIdempotencia, string requisicao, string resultado)
     {
         const string sql = @"
-            INSERT OR REPLACE INTO idempotencia (Chave_Idempotencia, Requisicao, Resultado)
+            INSERT OR REPLACE INTO idempotencia (ChaveIdempotencia, Requisicao, Resultado)
             VALUES (@Chave, @Requisicao, @Resultado)";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             Chave = chaveIdempotencia,
@@ -51,6 +51,6 @@ public class IdempotenciaRepository : IIdempotenciaRepository
             Resultado = resultado
         });
 
-        _cache.Set(chaveIdempotencia, resultado, TimeSpan.FromHours(1));
+        cache.Set(chaveIdempotencia, resultado, TimeSpan.FromHours(1));
     }
 }

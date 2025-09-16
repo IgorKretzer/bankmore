@@ -8,13 +8,13 @@ namespace BankMore.Tarifas.API.Controllers;
 [Route("api/[controller]")]
 public class TarifasController : ControllerBase
 {
-    private readonly ITarifaRepository _tarifaRepository;
-    private readonly ILogger<TarifasController> _logger;
+    private readonly ITarifaRepository tarifaRepository;
+    private readonly ILogger<TarifasController> logger;
 
     public TarifasController(ITarifaRepository tarifaRepository, ILogger<TarifasController> logger)
     {
-        _tarifaRepository = tarifaRepository;
-        _logger = logger;
+        this.tarifaRepository = tarifaRepository;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public class TarifasController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Consultando tarifas aplicadas");
+            logger.LogInformation("Consultando tarifas aplicadas");
             
             var response = new
             {
@@ -46,11 +46,11 @@ public class TarifasController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao consultar tarifas");
+            logger.LogError(ex, "Erro ao consultar tarifas");
             return BadRequest(new ErrorResponse
             {
                 Error = "Erro interno na consulta de tarifas",
-                ErrorType = "INTERNAL_ERROR"
+                ErrorType = "INTERNALERROR"
             });
         }
     }
@@ -72,7 +72,7 @@ public class TarifasController : ControllerBase
                 return BadRequest(new ErrorResponse
                 {
                     Error = "Dados inválidos para aplicação de tarifa",
-                    ErrorType = "INVALID_INPUT"
+                    ErrorType = "INVALIDINPUT"
                 });
             }
 
@@ -80,9 +80,9 @@ public class TarifasController : ControllerBase
             
             var tarifa = new Tarifa(idTarifa, request.IdContaCorrente, request.Valor);
             
-            await _tarifaRepository.SalvarAsync(tarifa);
+            await tarifaRepository.SalvarAsync(tarifa);
 
-            _logger.LogInformation("Tarifa aplicada: {IdTarifa} - Conta: {IdConta} - Valor: {Valor}", 
+            logger.LogInformation("Tarifa aplicada: {IdTarifa} - Conta: {IdConta} - Valor: {Valor}", 
                 idTarifa, request.IdContaCorrente, request.Valor);
 
             var response = new
@@ -98,11 +98,11 @@ public class TarifasController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao aplicar tarifa");
+            logger.LogError(ex, "Erro ao aplicar tarifa");
             return BadRequest(new ErrorResponse
             {
                 Error = "Erro interno na aplicação de tarifa",
-                ErrorType = "INTERNAL_ERROR"
+                ErrorType = "INTERNALERROR"
             });
         }
     }

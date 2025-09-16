@@ -6,24 +6,24 @@ namespace BankMore.ContaCorrente.API.Middleware;
 
 public class ErrorHandlingMiddleware
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ErrorHandlingMiddleware> _logger;
+    private readonly RequestDelegate next;
+    private readonly ILogger<ErrorHandlingMiddleware> logger;
 
     public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        this.next = next;
+        this.logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro não tratado na API de Conta Corrente - Path: {Path}", context.Request.Path);
+            logger.LogError(ex, "Erro não tratado na API de Conta Corrente - Path: {Path}", context.Request.Path);
             await ProcessarErroBancario(context, ex);
         }
     }
@@ -35,7 +35,7 @@ public class ErrorHandlingMiddleware
         var response = new
         {
             error = "Erro interno no processamento da operação bancária",
-            errorType = ErrorTypes.INTERNAL_ERROR,
+            errorType = ErrorTypes.INTERNALERROR,
             details = exception.Message,
             timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
             operation = ObterOperacaoAtual(context.Request.Path)

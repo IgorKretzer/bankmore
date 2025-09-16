@@ -11,11 +11,11 @@ namespace BankMore.Tarifas.Infrastructure.Kafka;
 
 public class TransferenciaRealizadaConsumer : IMessageHandler<TransferenciaRealizadaEvent>
 {
-    private readonly ITarifaRepository _tarifaRepository;
-    private readonly IMessageProducer _messageProducer;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<TransferenciaRealizadaConsumer> _logger;
-    private readonly decimal _valorTarifa;
+    private readonly ITarifaRepository tarifaRepository;
+    private readonly IMessageProducer messageProducer;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<TransferenciaRealizadaConsumer> logger;
+    private readonly decimal valorTarifa;
 
     public TransferenciaRealizadaConsumer(
         ITarifaRepository tarifaRepository,
@@ -23,41 +23,41 @@ public class TransferenciaRealizadaConsumer : IMessageHandler<TransferenciaReali
         IConfiguration configuration,
         ILogger<TransferenciaRealizadaConsumer> logger)
     {
-        _tarifaRepository = tarifaRepository;
-        _messageProducer = messageProducer;
-        _configuration = configuration;
-        _logger = logger;
-        _valorTarifa = _configuration.GetValue<decimal>("Tarifas:ValorTransferencia", 2.00m);
+        this.tarifaRepository = tarifaRepository;
+        this.messageProducer = messageProducer;
+        this.configuration = configuration;
+        this.logger = logger;
+        valorTarifa = configuration.GetValue<decimal>("Tarifas:ValorTransferencia", 2.00m);
     }
 
     public async Task Handle(IMessageContext context, TransferenciaRealizadaEvent message)
     {
         try
         {
-            _logger.LogInformation("Processando transferência realizada: {IdRequisicao}", message.IdRequisicao);
+            logger.LogInformation("Processando transferência realizada: {IdRequisicao}", message.IdRequisicao);
 
             var tarifa = new Tarifa(
                 Guid.NewGuid().ToString(),
                 message.IdContaCorrente,
-                _valorTarifa
+                valorTarifa
             );
 
-            await _tarifaRepository.SalvarAsync(tarifa);
+            await tarifaRepository.SalvarAsync(tarifa);
 
             var tarifaAplicadaEvent = new TarifaAplicadaEvent
             {
                 IdContaCorrente = message.IdContaCorrente,
-                ValorTarifado = _valorTarifa
+                ValorTarifado = valorTarifa
             };
 
-            await _messageProducer.ProduceAsync("tarifas-realizadas", tarifaAplicadaEvent);
+            await messageProducer.ProduceAsync("tarifas-realizadas", tarifaAplicadaEvent);
 
-            _logger.LogInformation("Tarifa aplicada com sucesso: {IdContaCorrente} - {Valor}", 
-                message.IdContaCorrente, _valorTarifa);
+            logger.LogInformation("Tarifa aplicada com sucesso: {IdContaCorrente} - {Valor}", 
+                message.IdContaCorrente, valorTarifa);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao processar transferência realizada: {IdRequisicao}", message.IdRequisicao);
+            logger.LogError(ex, "Erro ao processar transferência realizada: {IdRequisicao}", message.IdRequisicao);
             throw;
         }
     }

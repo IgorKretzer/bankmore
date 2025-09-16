@@ -23,7 +23,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task ConsultarTarifas_DeveRetornarSucesso()
+    public async Task ConsultarTarifasDeveRetornarSucesso()
     {
         // Act
         var result = await controller.ConsultarTarifas();
@@ -45,7 +45,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task AplicarTarifa_ComDadosValidos_DeveRetornarSucesso()
+    public async Task AplicarTarifaComDadosValidosDeveRetornarSucesso()
     {
         // Arrange
         var request = new AplicarTarifaRequest
@@ -78,7 +78,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task AplicarTarifa_ComIdContaVazio_DeveRetornarBadRequest()
+    public async Task AplicarTarifaComIdContaVazioDeveRetornarBadRequest()
     {
         // Arrange
         var request = new AplicarTarifaRequest
@@ -97,7 +97,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task AplicarTarifa_ComValorZero_DeveRetornarBadRequest()
+    public async Task AplicarTarifaComValorZeroDeveRetornarBadRequest()
     {
         // Arrange
         var request = new AplicarTarifaRequest
@@ -116,7 +116,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task AplicarTarifa_ComValorNegativo_DeveRetornarBadRequest()
+    public async Task AplicarTarifaComValorNegativoDeveRetornarBadRequest()
     {
         // Arrange
         var request = new AplicarTarifaRequest
@@ -135,7 +135,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task AplicarTarifa_ComExcecao_DeveRetornarBadRequest()
+    public async Task AplicarTarifaComExcecaoDeveRetornarBadRequest()
     {
         // Arrange
         var request = new AplicarTarifaRequest
@@ -166,7 +166,7 @@ public class TarifasControllerTests
     }
 
     [Fact]
-    public async Task ConsultarTarifas_ComExcecao_DeveRetornarBadRequest()
+    public async Task ConsultarTarifasComExcecaoDeveRetornarBadRequest()
     {
         // Arrange - Simular exceção no método ConsultarTarifas
         // Vamos criar um controller com um mock que falha

@@ -12,13 +12,13 @@ namespace BankMore.ContaCorrente.API.Controllers;
 [Route("api/[controller]")]
 public class ContaCorrenteController : ControllerBase
 {
-    private readonly IMediator _mediator;
-    private readonly ILogger<ContaCorrenteController> _logger;
+    private readonly IMediator mediator;
+    private readonly ILogger<ContaCorrenteController> logger;
 
     public ContaCorrenteController(IMediator mediator, ILogger<ContaCorrenteController> logger)
     {
-        _mediator = mediator;
-        _logger = logger;
+        this.mediator = mediator;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -39,13 +39,13 @@ public class ContaCorrenteController : ControllerBase
             Senha = request.Senha
         };
 
-        _logger.LogDebug("Processando cadastro para CPF: {Cpf}", request.Cpf);
+        logger.LogDebug("Processando cadastro para CPF: {Cpf}", request.Cpf);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (result.IsFailure)
         {
-            _logger.LogWarning("Falha no cadastro: {Error} - CPF: {Cpf}", result.Error, request.Cpf);
+            logger.LogWarning("Falha no cadastro: {Error} - CPF: {Cpf}", result.Error, request.Cpf);
             
             return BadRequest(new ErrorResponse
             {
@@ -54,7 +54,7 @@ public class ContaCorrenteController : ControllerBase
             });
         }
 
-        _logger.LogInformation("Conta cadastrada com sucesso: {NumeroConta}", result.Value.NumeroConta);
+        logger.LogInformation("Conta cadastrada com sucesso: {NumeroConta}", result.Value.NumeroConta);
 
         return Ok(result.Value);
     }
@@ -74,7 +74,7 @@ public class ContaCorrenteController : ControllerBase
             return BadRequest(new ErrorResponse
             {
                 Error = "Identificação e senha são obrigatórios",
-                ErrorType = "INVALID_INPUT"
+                ErrorType = "INVALIDINPUT"
             });
         }
 
@@ -84,13 +84,13 @@ public class ContaCorrenteController : ControllerBase
             Senha = request.Senha
         };
 
-        _logger.LogInformation("Tentativa de login para: {Identificacao}", request.Identificacao);
+        logger.LogInformation("Tentativa de login para: {Identificacao}", request.Identificacao);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (result.IsFailure)
         {
-            _logger.LogWarning("Falha no login: {Error} - Identificação: {Identificacao}", 
+            logger.LogWarning("Falha no login: {Error} - Identificação: {Identificacao}", 
                 result.Error, request.Identificacao);
             
             return Unauthorized(new ErrorResponse
@@ -100,7 +100,7 @@ public class ContaCorrenteController : ControllerBase
             });
         }
 
-        _logger.LogInformation("Login realizado com sucesso para conta: {NumeroConta}", 
+        logger.LogInformation("Login realizado com sucesso para conta: {NumeroConta}", 
             result.Value.NumeroConta);
 
         return Ok(result.Value);
@@ -130,7 +130,7 @@ public class ContaCorrenteController : ControllerBase
             Senha = request.Senha
         };
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (result.IsFailure)
         {
@@ -171,7 +171,7 @@ public class ContaCorrenteController : ControllerBase
             TipoMovimento = request.TipoMovimento
         };
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (result.IsFailure)
         {
@@ -207,7 +207,7 @@ public class ContaCorrenteController : ControllerBase
             IdContaCorrente = contaId
         };
 
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         if (result.IsFailure)
         {

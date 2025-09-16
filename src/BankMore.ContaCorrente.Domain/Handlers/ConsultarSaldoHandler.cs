@@ -7,13 +7,13 @@ namespace BankMore.ContaCorrente.Domain.Handlers;
 
 public class ConsultarSaldoHandler : IRequestHandler<ConsultarSaldoQuery, Result<ConsultarSaldoResponse>>
 {
-    private readonly IContaCorrenteRepository _contaRepo;
-    private readonly IMovimentoRepository _movimentoRepo;
+    private readonly IContaCorrenteRepository contaRepo;
+    private readonly IMovimentoRepository movimentoRepo;
 
     public ConsultarSaldoHandler(IContaCorrenteRepository contaRepo, IMovimentoRepository movimentoRepo)
     {
-        _contaRepo = contaRepo;
-        _movimentoRepo = movimentoRepo;
+        this.contaRepo = contaRepo;
+        this.movimentoRepo = movimentoRepo;
     }
 
     public async Task<Result<ConsultarSaldoResponse>> Handle(ConsultarSaldoQuery query, CancellationToken cancellationToken)
@@ -21,15 +21,15 @@ public class ConsultarSaldoHandler : IRequestHandler<ConsultarSaldoQuery, Result
         var contaEncontrada = await LocalizarConta(query.IdContaCorrente);
         if (contaEncontrada == null)
         {
-            return Result<ConsultarSaldoResponse>.Failure("Conta não encontrada", ErrorTypes.INVALID_ACCOUNT);
+            return Result<ConsultarSaldoResponse>.Failure("Conta não encontrada", ErrorTypes.INVALIDACCOUNT);
         }
 
         if (!contaEncontrada.Ativo)
         {
-            return Result<ConsultarSaldoResponse>.Failure("Conta inativa", ErrorTypes.INACTIVE_ACCOUNT);
+            return Result<ConsultarSaldoResponse>.Failure("Conta inativa", ErrorTypes.INACTIVEACCOUNT);
         }
 
-        var historicoMovimentos = await _movimentoRepo.ObterPorContaAsync(query.IdContaCorrente);
+        var historicoMovimentos = await movimentoRepo.ObterPorContaAsync(query.IdContaCorrente);
         
         var saldoAtual = CalcularSaldoAtual(historicoMovimentos);
 
@@ -44,7 +44,7 @@ public class ConsultarSaldoHandler : IRequestHandler<ConsultarSaldoQuery, Result
 
     private async Task<Entities.ContaCorrente?> LocalizarConta(string idConta)
     {
-        return await _contaRepo.ObterPorIdAsync(idConta);
+        return await contaRepo.ObterPorIdAsync(idConta);
     }
 
     private ValueObjects.Saldo CalcularSaldoAtual(IEnumerable<Entities.Movimento> movimentos)

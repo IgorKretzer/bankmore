@@ -9,11 +9,11 @@ namespace BankMore.ContaCorrente.Domain.Handlers;
 
 public class CadastrarContaHandler : IRequestHandler<CadastrarContaCommand, Result<CadastrarContaResponse>>
 {
-    private readonly IContaCorrenteRepository _contaRepository;
+    private readonly IContaCorrenteRepository contaRepository;
 
     public CadastrarContaHandler(IContaCorrenteRepository contaRepository)
     {
-        _contaRepository = contaRepository;
+        this.contaRepository = contaRepository;
     }
 
     public async Task<Result<CadastrarContaResponse>> Handle(CadastrarContaCommand request, CancellationToken cancellationToken)
@@ -22,10 +22,10 @@ public class CadastrarContaHandler : IRequestHandler<CadastrarContaCommand, Resu
         if (validacaoResult.IsFailure)
             return validacaoResult;
 
-        var contaExistente = await _contaRepository.ObterPorCpfAsync(request.Cpf);
+        var contaExistente = await contaRepository.ObterPorCpfAsync(request.Cpf);
         if (contaExistente != null)
         {
-            return Result<CadastrarContaResponse>.Failure("CPF já cadastrado", ErrorTypes.INVALID_DOCUMENT);
+            return Result<CadastrarContaResponse>.Failure("CPF já cadastrado", ErrorTypes.INVALIDDOCUMENT);
         }
 
         var idConta = GerarIdConta();
@@ -35,7 +35,7 @@ public class CadastrarContaHandler : IRequestHandler<CadastrarContaCommand, Resu
 
         var conta = CriarNovaConta(idConta, numeroConta, request.Nome, credenciais.hash, credenciais.salt);
 
-        await _contaRepository.SalvarAsync(conta);
+        await contaRepository.SalvarAsync(conta);
 
         return Result<CadastrarContaResponse>.Success(new CadastrarContaResponse
         {
@@ -48,17 +48,17 @@ public class CadastrarContaHandler : IRequestHandler<CadastrarContaCommand, Resu
     {
         if (!ValidationHelper.IsValidCpf(request.Cpf))
         {
-            return Task.FromResult(Result<CadastrarContaResponse>.Failure("CPF inválido", ErrorTypes.INVALID_DOCUMENT));
+            return Task.FromResult(Result<CadastrarContaResponse>.Failure("CPF inválido", ErrorTypes.INVALIDDOCUMENT));
         }
 
         if (!ValidationHelper.IsValidPassword(request.Senha))
         {
-            return Task.FromResult(Result<CadastrarContaResponse>.Failure("Senha deve ter pelo menos 6 caracteres", ErrorTypes.INVALID_VALUE));
+            return Task.FromResult(Result<CadastrarContaResponse>.Failure("Senha deve ter pelo menos 6 caracteres", ErrorTypes.INVALIDVALUE));
         }
 
         if (string.IsNullOrWhiteSpace(request.Nome))
         {
-            return Task.FromResult(Result<CadastrarContaResponse>.Failure("Nome é obrigatório", ErrorTypes.INVALID_VALUE));
+            return Task.FromResult(Result<CadastrarContaResponse>.Failure("Nome é obrigatório", ErrorTypes.INVALIDVALUE));
         }
 
         return Task.FromResult(Result<CadastrarContaResponse>.Success(null!)); // Só para indicar que passou na validação
@@ -71,7 +71,7 @@ public class CadastrarContaHandler : IRequestHandler<CadastrarContaCommand, Resu
 
     private async Task<int> ObterProximoNumeroConta()
     {
-        return await _contaRepository.ObterProximoNumeroContaAsync();
+        return await contaRepository.ObterProximoNumeroContaAsync();
     }
 
     private (string hash, string salt) ProcessarSenha(string senha)

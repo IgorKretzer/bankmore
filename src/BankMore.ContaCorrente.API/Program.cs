@@ -113,15 +113,15 @@ public interface IDbConnectionFactory
 
 public class SqliteConnectionFactory : IDbConnectionFactory
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     public SqliteConnectionFactory(string connectionString)
     {
-        _connectionString = connectionString;
+        this.connectionString = connectionString;
     }
 
     public SqliteConnection CreateConnection()
     {
-        return new SqliteConnection(_connectionString);
+        return new SqliteConnection(connectionString);
     }
 }

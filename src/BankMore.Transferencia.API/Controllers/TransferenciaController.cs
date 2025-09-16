@@ -11,13 +11,13 @@ namespace BankMore.Transferencia.API.Controllers;
 [Route("api/[controller]")]
 public class TransferenciaController : ControllerBase
 {
-    private readonly IMediator _mediator;
-    private readonly ILogger<TransferenciaController> _logger;
+    private readonly IMediator mediator;
+    private readonly ILogger<TransferenciaController> logger;
 
     public TransferenciaController(IMediator mediator, ILogger<TransferenciaController> logger)
     {
-        _mediator = mediator;
-        _logger = logger;
+        this.mediator = mediator;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class TransferenciaController : ControllerBase
             Token = token
         };
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         if (result.IsFailure)
         {

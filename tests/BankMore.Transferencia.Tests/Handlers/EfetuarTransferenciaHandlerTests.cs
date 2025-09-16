@@ -28,7 +28,7 @@ public class EfetuarTransferenciaHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ComValorValido_DeveRetornarSucesso()
+    public async Task HandleComValorValidoDeveRetornarSucesso()
     {
         // Arrange
         var command = new EfetuarTransferenciaCommand
@@ -66,12 +66,12 @@ public class EfetuarTransferenciaHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         contaCorrenteServiceMock.Verify(x => x.RealizarDebitoAsync(
-            "trans-001_debito", 
+            "trans-001debito", 
             "conta-origem-123", 
             100.50m, 
             "jwt-token-123"), Times.Once);
         contaCorrenteServiceMock.Verify(x => x.RealizarCreditoAsync(
-            "trans-001_credito", 
+            "trans-001credito", 
             2, 
             100.50m, 
             "jwt-token-123"), Times.Once);
@@ -80,7 +80,7 @@ public class EfetuarTransferenciaHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ComValorInvalido_DeveRetornarFalha()
+    public async Task HandleComValorInvalidoDeveRetornarFalha()
     {
         // Arrange
         var command = new EfetuarTransferenciaCommand
@@ -98,11 +98,11 @@ public class EfetuarTransferenciaHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be("Valor deve ser positivo");
-        result.ErrorType.Should().Be(ErrorTypes.INVALID_VALUE);
+        result.ErrorType.Should().Be(ErrorTypes.INVALIDVALUE);
     }
 
     [Fact]
-    public async Task Handle_ComFalhaNoDebito_DeveRetornarFalha()
+    public async Task HandleComFalhaNoDebitoDeveRetornarFalha()
     {
         // Arrange
         var command = new EfetuarTransferenciaCommand
@@ -119,7 +119,7 @@ public class EfetuarTransferenciaHandlerTests
                 It.IsAny<string>(), 
                 It.IsAny<decimal>(), 
                 It.IsAny<string>()))
-            .ReturnsAsync(Result.Failure("Saldo insuficiente", ErrorTypes.INSUFFICIENT_FUNDS));
+            .ReturnsAsync(Result.Failure("Saldo insuficiente", ErrorTypes.INSUFFICIENTFUNDS));
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -127,11 +127,11 @@ public class EfetuarTransferenciaHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be("Falha no débito: Saldo insuficiente");
-        result.ErrorType.Should().Be(ErrorTypes.TRANSFER_FAILED);
+        result.ErrorType.Should().Be(ErrorTypes.TRANSFERFAILED);
     }
 
     [Fact]
-    public async Task Handle_ComFalhaNoCredito_DeveRetornarFalha()
+    public async Task HandleComFalhaNoCreditoDeveRetornarFalha()
     {
         // Arrange
         var command = new EfetuarTransferenciaCommand
@@ -155,7 +155,7 @@ public class EfetuarTransferenciaHandlerTests
                 It.IsAny<int>(), 
                 It.IsAny<decimal>(), 
                 It.IsAny<string>()))
-            .ReturnsAsync(Result.Failure("Conta destino inativa", ErrorTypes.INACTIVE_ACCOUNT));
+            .ReturnsAsync(Result.Failure("Conta destino inativa", ErrorTypes.INACTIVEACCOUNT));
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -163,11 +163,11 @@ public class EfetuarTransferenciaHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be("Falha no crédito: Conta destino inativa");
-        result.ErrorType.Should().Be(ErrorTypes.TRANSFER_FAILED);
+        result.ErrorType.Should().Be(ErrorTypes.TRANSFERFAILED);
     }
 
     [Fact]
-    public async Task Handle_ComExcecao_DeveRetornarFalha()
+    public async Task HandleComExcecaoDeveRetornarFalha()
     {
         // Arrange
         var command = new EfetuarTransferenciaCommand
@@ -192,6 +192,6 @@ public class EfetuarTransferenciaHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Should().Be("Erro interno: Erro de conexão");
-        result.ErrorType.Should().Be(ErrorTypes.INTERNAL_ERROR);
+        result.ErrorType.Should().Be(ErrorTypes.INTERNALERROR);
     }
 }

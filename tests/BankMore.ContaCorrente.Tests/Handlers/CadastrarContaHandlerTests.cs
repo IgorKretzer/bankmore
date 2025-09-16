@@ -20,7 +20,7 @@ public class CadastrarContaHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ComCpfValido_DeveRetornarSucesso()
+    public async Task HandleComCpfValidoDeveRetornarSucesso()
     {
         // Arrange
         var command = new CadastrarContaCommand
@@ -47,7 +47,7 @@ public class CadastrarContaHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ComCpfInvalido_DeveRetornarFalha()
+    public async Task HandleComCpfInvalidoDeveRetornarFalha()
     {
         //Arrange
         var command = new CadastrarContaCommand
@@ -62,11 +62,11 @@ public class CadastrarContaHandlerTests
 
         //Assert
         result.IsFailure.Should().BeTrue();
-        result.ErrorType.Should().Be(ErrorTypes.INVALID_DOCUMENT);
+        result.ErrorType.Should().Be(ErrorTypes.INVALIDDOCUMENT);
     }
 
     [Fact]
-    public async Task Handle_ComSenhaInvalida_DeveRetornarFalha()
+    public async Task HandleComSenhaInvalidaDeveRetornarFalha()
     {
         //Arrange
         var command = new CadastrarContaCommand
@@ -81,6 +81,6 @@ public class CadastrarContaHandlerTests
 
         //Assert
         result.IsFailure.Should().BeTrue();
-        result.ErrorType.Should().Be(ErrorTypes.INVALID_VALUE);
+        result.ErrorType.Should().Be(ErrorTypes.INVALIDVALUE);
     }
 }

@@ -6,24 +6,24 @@ namespace BankMore.Transferencia.API.Middleware;
 
 public class ErrorHandlingMiddleware
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ErrorHandlingMiddleware> _logger;
+    private readonly RequestDelegate next;
+    private readonly ILogger<ErrorHandlingMiddleware> logger;
 
     public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        this.next = next;
+        this.logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falha no processamento de transferência - RequestId: {RequestId}", 
+            logger.LogError(ex, "Falha no processamento de transferência - RequestId: {RequestId}", 
                 context.TraceIdentifier);
             await TratarErroTransferencia(context, ex);
         }
@@ -36,7 +36,7 @@ public class ErrorHandlingMiddleware
         var response = new
         {
             error = "Falha no processamento da transferência",
-            errorType = ErrorTypes.TRANSFER_FAILED,
+            errorType = ErrorTypes.TRANSFERFAILED,
             details = exception.Message,
             requestId = context.TraceIdentifier,
             timestamp = DateTime.UtcNow.ToString("O"),

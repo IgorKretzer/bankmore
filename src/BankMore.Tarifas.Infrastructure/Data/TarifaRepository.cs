@@ -8,11 +8,11 @@ namespace BankMore.Tarifas.Infrastructure.Data;
 
 public class TarifaRepository : ITarifaRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     public TarifaRepository(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+        connectionString = configuration.GetConnectionString("DefaultConnection")!;
     }
 
     public async Task SalvarAsync(Tarifa tarifa)
@@ -21,7 +21,7 @@ public class TarifaRepository : ITarifaRepository
             INSERT INTO tarifa (IdTarifa, IdContaCorrente, DataMovimento, Valor)
             VALUES (@IdTarifa, @IdContaCorrente, @DataMovimento, @Valor)";
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.ExecuteAsync(sql, new
         {
             IdTarifa = tarifa.IdTarifa,

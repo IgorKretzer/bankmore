@@ -7,23 +7,23 @@ namespace BankMore.Shared.Security;
 
 public class JwtTokenGenerator
 {
-    private readonly string _secretKey;
-    private readonly string _issuer;
-    private readonly string _audience;
-    private readonly int _expirationMinutes;
+    private readonly string secretKey;
+    private readonly string issuer;
+    private readonly string audience;
+    private readonly int expirationMinutes;
 
     public JwtTokenGenerator(string secretKey, string issuer, string audience, int expirationMinutes = 60)
     {
-        _secretKey = secretKey;
-        _issuer = issuer;
-        _audience = audience;
-        _expirationMinutes = expirationMinutes;
+        this.secretKey = secretKey;
+        this.issuer = issuer;
+        this.audience = audience;
+        this.expirationMinutes = expirationMinutes;
     }
 
     public string GenerateToken(string contaId, string numeroConta)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_secretKey);
+        var key = Encoding.ASCII.GetBytes(secretKey);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -33,9 +33,9 @@ public class JwtTokenGenerator
                 new Claim("numeroConta", numeroConta),
                 new Claim(ClaimTypes.NameIdentifier, contaId)
             }),
-            Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes),
-            Issuer = _issuer,
-            Audience = _audience,
+            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
+            Issuer = issuer,
+            Audience = audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
@@ -48,16 +48,16 @@ public class JwtTokenGenerator
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(secretKey);
 
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = issuer,
                 ValidateAudience = true,
-                ValidAudience = _audience,
+                ValidAudience = audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             };

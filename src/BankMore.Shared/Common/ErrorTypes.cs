@@ -2,13 +2,13 @@ namespace BankMore.Shared.Common;
 
 public static class ErrorTypes
 {
-    public const string INVALID_DOCUMENT = "INVALID_DOCUMENT";
-    public const string USER_UNAUTHORIZED = "USER_UNAUTHORIZED";
-    public const string INVALID_ACCOUNT = "INVALID_ACCOUNT";
-    public const string INACTIVE_ACCOUNT = "INACTIVE_ACCOUNT";
-    public const string INVALID_VALUE = "INVALID_VALUE";
-    public const string INVALID_TYPE = "INVALID_TYPE";
-    public const string INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS";
-    public const string TRANSFER_FAILED = "TRANSFER_FAILED";
-    public const string INTERNAL_ERROR = "INTERNAL_ERROR";
+    public const string INVALIDDOCUMENT = "INVALIDDOCUMENT";
+    public const string USERUNAUTHORIZED = "USERUNAUTHORIZED";
+    public const string INVALIDACCOUNT = "INVALIDACCOUNT";
+    public const string INACTIVEACCOUNT = "INACTIVEACCOUNT";
+    public const string INVALIDVALUE = "INVALIDVALUE";
+    public const string INVALIDTYPE = "INVALIDTYPE";
+    public const string INSUFFICIENTFUNDS = "INSUFFICIENTFUNDS";
+    public const string TRANSFERFAILED = "TRANSFERFAILED";
+    public const string INTERNALERROR = "INTERNALERROR";
 }

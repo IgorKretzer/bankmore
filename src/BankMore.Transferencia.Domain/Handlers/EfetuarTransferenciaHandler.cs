@@ -10,55 +10,55 @@ namespace BankMore.Transferencia.Domain.Handlers;
 
 public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaCommand, Result>
 {
-    private readonly ITransferenciaRepository _transferenciaRepository;
-    private readonly IContaCorrenteService _contaCorrenteService;
-    private readonly IMessageProducer _messageProducer;
+    private readonly ITransferenciaRepository transferenciaRepository;
+    private readonly IContaCorrenteService contaCorrenteService;
+    private readonly IMessageProducer messageProducer;
 
     public EfetuarTransferenciaHandler(
         ITransferenciaRepository transferenciaRepository,
         IContaCorrenteService contaCorrenteService,
         IMessageProducer messageProducer)
     {
-        _transferenciaRepository = transferenciaRepository;
-        _contaCorrenteService = contaCorrenteService;
-        _messageProducer = messageProducer;
+        this.transferenciaRepository = transferenciaRepository;
+        this.contaCorrenteService = contaCorrenteService;
+        this.messageProducer = messageProducer;
     }
 
     public async Task<Result> Handle(EfetuarTransferenciaCommand request, CancellationToken cancellationToken)
     {
         if (!ValidationHelper.IsValidValue(request.Valor))
         {
-            return Result.Failure("Valor deve ser positivo", ErrorTypes.INVALID_VALUE);
+            return Result.Failure("Valor deve ser positivo", ErrorTypes.INVALIDVALUE);
         }
 
         try
         {
-            var debitoResult = await _contaCorrenteService.RealizarDebitoAsync(
-                request.IdRequisicao + "_debito",
+            var debitoResult = await contaCorrenteService.RealizarDebitoAsync(
+                request.IdRequisicao + "debito",
                 request.IdContaCorrenteOrigem,
                 request.Valor,
                 request.Token);
 
             if (debitoResult.IsFailure)
             {
-                return Result.Failure($"Falha no débito: {debitoResult.Error}", ErrorTypes.TRANSFER_FAILED);
+                return Result.Failure($"Falha no débito: {debitoResult.Error}", ErrorTypes.TRANSFERFAILED);
             }
 
-            var creditoResult = await _contaCorrenteService.RealizarCreditoAsync(
-                request.IdRequisicao + "_credito",
+            var creditoResult = await contaCorrenteService.RealizarCreditoAsync(
+                request.IdRequisicao + "credito",
                 request.NumeroContaDestino,
                 request.Valor,
                 request.Token);
 
             if (creditoResult.IsFailure)
             {
-                // await _contaCorrenteService.RealizarCreditoAsync(
-                //     request.IdRequisicao + "_estorno",
+                // await contaCorrenteService.RealizarCreditoAsync(
+                //     request.IdRequisicao + "estorno",
                 //     int.Parse(request.IdContaCorrenteOrigem), // Assumindo que IdContaCorrenteOrigem contém o número
                 //     request.Valor,
                 //     request.Token);
 
-                return Result.Failure($"Falha no crédito: {creditoResult.Error}", ErrorTypes.TRANSFER_FAILED);
+                return Result.Failure($"Falha no crédito: {creditoResult.Error}", ErrorTypes.TRANSFERFAILED);
             }
 
             var transferencia = new TransferenciaEntity(
@@ -67,7 +67,7 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
                 request.NumeroContaDestino.ToString(), // Assumindo que precisamos do ID da conta destino
                 request.Valor);
 
-            await _transferenciaRepository.SalvarAsync(transferencia);
+            await transferenciaRepository.SalvarAsync(transferencia);
 
             var evento = new TransferenciaRealizadaEvent
             {
@@ -75,7 +75,7 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
                 IdContaCorrente = request.IdContaCorrenteOrigem
             };
 
-            await _messageProducer.ProduceAsync("transferencias-realizadas", evento);
+            await messageProducer.ProduceAsync("transferencias-realizadas", evento);
 
             return Result.Success();
         }
@@ -83,8 +83,8 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
         {
             try
             {
-                await _contaCorrenteService.RealizarCreditoAsync(
-                    request.IdRequisicao + "_estorno_erro",
+                await contaCorrenteService.RealizarCreditoAsync(
+                    request.IdRequisicao + "estornoerro",
                     int.Parse(request.IdContaCorrenteOrigem),
                     request.Valor,
                     request.Token);
@@ -93,7 +93,7 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
             {
             }
 
-            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNAL_ERROR);
+            return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNALERROR);
         }
     }
 }
