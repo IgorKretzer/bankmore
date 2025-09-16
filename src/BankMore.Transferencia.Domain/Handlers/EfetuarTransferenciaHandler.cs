@@ -26,7 +26,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
 
     public async Task<Result> Handle(EfetuarTransferenciaCommand request, CancellationToken cancellationToken)
     {
-        // Validar valor
         if (!ValidationHelper.IsValidValue(request.Valor))
         {
             return Result.Failure("Valor deve ser positivo", ErrorTypes.INVALID_VALUE);
@@ -34,7 +33,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
 
         try
         {
-            // Realizar débito na conta origem
             var debitoResult = await _contaCorrenteService.RealizarDebitoAsync(
                 request.IdRequisicao + "_debito",
                 request.IdContaCorrenteOrigem,
@@ -46,7 +44,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
                 return Result.Failure($"Falha no débito: {debitoResult.Error}", ErrorTypes.TRANSFER_FAILED);
             }
 
-            // Realizar crédito na conta destino
             var creditoResult = await _contaCorrenteService.RealizarCreditoAsync(
                 request.IdRequisicao + "_credito",
                 request.NumeroContaDestino,
@@ -55,17 +52,15 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
 
             if (creditoResult.IsFailure)
             {
-                // Estorno - realizar crédito na conta origem
-                await _contaCorrenteService.RealizarCreditoAsync(
-                    request.IdRequisicao + "_estorno",
-                    int.Parse(request.IdContaCorrenteOrigem), // Assumindo que IdContaCorrenteOrigem contém o número
-                    request.Valor,
-                    request.Token);
+                // await _contaCorrenteService.RealizarCreditoAsync(
+                //     request.IdRequisicao + "_estorno",
+                //     int.Parse(request.IdContaCorrenteOrigem), // Assumindo que IdContaCorrenteOrigem contém o número
+                //     request.Valor,
+                //     request.Token);
 
                 return Result.Failure($"Falha no crédito: {creditoResult.Error}", ErrorTypes.TRANSFER_FAILED);
             }
 
-            // Salvar transferência
             var transferencia = new TransferenciaEntity(
                 request.IdRequisicao,
                 request.IdContaCorrenteOrigem,
@@ -74,7 +69,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
 
             await _transferenciaRepository.SalvarAsync(transferencia);
 
-            // Publicar evento de transferência realizada
             var evento = new TransferenciaRealizadaEvent
             {
                 IdRequisicao = request.IdRequisicao,
@@ -87,7 +81,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
         }
         catch (Exception ex)
         {
-            // Em caso de erro, tentar estorno
             try
             {
                 await _contaCorrenteService.RealizarCreditoAsync(
@@ -98,7 +91,6 @@ public class EfetuarTransferenciaHandler : IRequestHandler<EfetuarTransferenciaC
             }
             catch
             {
-                // Log do erro de estorno
             }
 
             return Result.Failure($"Erro interno: {ex.Message}", ErrorTypes.INTERNAL_ERROR);

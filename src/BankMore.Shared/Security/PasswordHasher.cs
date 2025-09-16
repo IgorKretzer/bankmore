@@ -7,7 +7,6 @@ public class PasswordHasher
 {
     public static (string Hash, string Salt) HashPassword(string password)
     {
-        // Gera um salt aleatório
         var saltBytes = new byte[32];
         using (var rng = RandomNumberGenerator.Create())
         {
@@ -15,7 +14,6 @@ public class PasswordHasher
         }
         var salt = Convert.ToBase64String(saltBytes);
 
-        // Combina senha com salt e faz hash
         var passwordWithSalt = password + salt;
         var passwordBytes = Encoding.UTF8.GetBytes(passwordWithSalt);
         

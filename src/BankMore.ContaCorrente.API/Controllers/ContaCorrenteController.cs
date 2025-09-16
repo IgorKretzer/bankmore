@@ -31,8 +31,6 @@ public class ContaCorrenteController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> CadastrarConta([FromBody] CadastrarContaRequest request)
     {
-        // TODO: Adicionar validação de rate limiting para evitar spam de cadastros
-        // var rateLimitKey = $"cadastro_{Request.HttpContext.Connection.RemoteIpAddress}";
         
         var command = new CadastrarContaCommand
         {
@@ -41,14 +39,12 @@ public class ContaCorrenteController : ControllerBase
             Senha = request.Senha
         };
 
-        // Debug: log da requisição (remover em produção)
         _logger.LogDebug("Processando cadastro para CPF: {Cpf}", request.Cpf);
 
         var result = await _mediator.Send(command);
 
         if (result.IsFailure)
         {
-            // Log do erro para monitoramento
             _logger.LogWarning("Falha no cadastro: {Error} - CPF: {Cpf}", result.Error, request.Cpf);
             
             return BadRequest(new ErrorResponse
@@ -58,7 +54,6 @@ public class ContaCorrenteController : ControllerBase
             });
         }
 
-        // Log de sucesso
         _logger.LogInformation("Conta cadastrada com sucesso: {NumeroConta}", result.Value.NumeroConta);
 
         return Ok(result.Value);
@@ -74,7 +69,6 @@ public class ContaCorrenteController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), 401)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        // Validação básica antes de processar
         if (string.IsNullOrEmpty(request.Identificacao) || string.IsNullOrEmpty(request.Senha))
         {
             return BadRequest(new ErrorResponse
@@ -90,14 +84,12 @@ public class ContaCorrenteController : ControllerBase
             Senha = request.Senha
         };
 
-        // Log de tentativa de login (sem senha por segurança)
         _logger.LogInformation("Tentativa de login para: {Identificacao}", request.Identificacao);
 
         var result = await _mediator.Send(command);
 
         if (result.IsFailure)
         {
-            // Log de falha no login
             _logger.LogWarning("Falha no login: {Error} - Identificação: {Identificacao}", 
                 result.Error, request.Identificacao);
             
@@ -108,7 +100,6 @@ public class ContaCorrenteController : ControllerBase
             });
         }
 
-        // Log de sucesso no login
         _logger.LogInformation("Login realizado com sucesso para conta: {NumeroConta}", 
             result.Value.NumeroConta);
 
@@ -231,7 +222,6 @@ public class ContaCorrenteController : ControllerBase
     }
 }
 
-// DTOs para requests
 public class CadastrarContaRequest
 {
     public string Cpf { get; set; } = string.Empty;

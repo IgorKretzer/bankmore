@@ -12,42 +12,22 @@ using KafkaFlow;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database
 builder.Services.AddScoped<IDbConnectionFactory>(_ => 
     new SqliteConnectionFactory(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-// Repositories
 builder.Services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
 
-// Services
 builder.Services.AddHttpClient<IContaCorrenteService, ContaCorrenteService>();
 
-// Message Producer (mock implementation)
 builder.Services.AddScoped<BankMore.Transferencia.Domain.Interfaces.IMessageProducer, MockMessageProducer>();
 
-// Kafka (comentado por enquanto)
-// builder.Services.AddKafka(kafka => kafka
-//     .UseConsoleLog()
-//     .AddCluster(cluster => cluster
-//         .WithBrokers(new[] { "localhost:9092" })
-//         .AddProducer(producer => producer
-//             .DefaultTopic("transferencias-realizadas")
-//             .AddMiddlewares(middlewares => middlewares
-//                 .AddSerializer<JsonSerializer>()
-//             )
-//         )
-//     )
-// );
 
-// MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EfetuarTransferenciaHandler).Assembly));
 
-// JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"]!;
 var issuer = jwtSettings["Issuer"]!;
@@ -73,7 +53,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -86,7 +65,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -97,24 +75,17 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Custom middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.MapControllers();
 
-// Start Kafka
-// Kafka (comentado por enquanto)
-// var bus = app.Services.CreateKafkaBus();
-// await bus.StartAsync();
 
-// Initialize database
 using (var scope = app.Services.CreateScope())
 {
     var connectionString = app.Configuration.GetConnectionString("DefaultConnection")!;
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
     
-    // Execute SQL scripts
     var sqlScripts = new[]
     {
         File.ReadAllText("../../contacorrente.sql"),
@@ -132,7 +103,6 @@ using (var scope = app.Services.CreateScope())
         }
         catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("already exists"))
         {
-            // Tabela já existe, continuar
             Console.WriteLine($"Tabela já existe: {ex.Message}");
         }
     }

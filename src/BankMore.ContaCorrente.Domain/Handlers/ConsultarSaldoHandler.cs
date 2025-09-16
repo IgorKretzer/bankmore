@@ -18,26 +18,21 @@ public class ConsultarSaldoHandler : IRequestHandler<ConsultarSaldoQuery, Result
 
     public async Task<Result<ConsultarSaldoResponse>> Handle(ConsultarSaldoQuery query, CancellationToken cancellationToken)
     {
-        // Primeiro, localizar a conta
         var contaEncontrada = await LocalizarConta(query.IdContaCorrente);
         if (contaEncontrada == null)
         {
             return Result<ConsultarSaldoResponse>.Failure("Conta não encontrada", ErrorTypes.INVALID_ACCOUNT);
         }
 
-        // Verificar se a conta está ativa
         if (!contaEncontrada.Ativo)
         {
             return Result<ConsultarSaldoResponse>.Failure("Conta inativa", ErrorTypes.INACTIVE_ACCOUNT);
         }
 
-        // Buscar histórico de movimentações
         var historicoMovimentos = await _movimentoRepo.ObterPorContaAsync(query.IdContaCorrente);
         
-        // Calcular saldo atual
         var saldoAtual = CalcularSaldoAtual(historicoMovimentos);
 
-        // Montar resposta
         return Result<ConsultarSaldoResponse>.Success(new ConsultarSaldoResponse
         {
             NumeroConta = contaEncontrada.Numero,
@@ -54,7 +49,6 @@ public class ConsultarSaldoHandler : IRequestHandler<ConsultarSaldoQuery, Result
 
     private ValueObjects.Saldo CalcularSaldoAtual(IEnumerable<Entities.Movimento> movimentos)
     {
-        // Delegar para o value object que já sabe calcular
         return ValueObjects.Saldo.CalcularSaldo(movimentos);
     }
 }

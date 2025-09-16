@@ -23,7 +23,6 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            // Log específico para operações bancárias
             _logger.LogError(ex, "Erro não tratado na API de Conta Corrente - Path: {Path}", context.Request.Path);
             await ProcessarErroBancario(context, ex);
         }
@@ -33,14 +32,12 @@ public class ErrorHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
         
-        // Resposta mais específica para operações bancárias
         var response = new
         {
             error = "Erro interno no processamento da operação bancária",
             errorType = ErrorTypes.INTERNAL_ERROR,
             details = exception.Message,
             timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-            // Adicionar informações específicas do contexto bancário
             operation = ObterOperacaoAtual(context.Request.Path)
         };
 
@@ -56,7 +53,6 @@ public class ErrorHandlingMiddleware
 
     private string ObterOperacaoAtual(string path)
     {
-        // Identificar qual operação estava sendo executada
         if (path.Contains("/cadastrar"))
             return "Cadastro de Conta";
         if (path.Contains("/login"))

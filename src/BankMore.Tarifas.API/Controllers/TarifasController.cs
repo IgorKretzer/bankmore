@@ -28,17 +28,13 @@ public class TarifasController : ControllerBase
     {
         try
         {
-            // Implementação básica - em produção seria mais complexa
             _logger.LogInformation("Consultando tarifas aplicadas");
             
-            // Por enquanto, retorna uma resposta mockada
-            // TODO: Implementar consulta real no banco de dados
             var response = new
             {
                 message = "API de Tarifas funcionando",
                 timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 status = "Ativo",
-                // Mock de dados para demonstração
                 tarifas = new[]
                 {
                     new { tipo = "Transferência", valor = 2.50m, data = DateTime.UtcNow.AddDays(-1).ToString("dd/MM/yyyy") },
@@ -71,7 +67,6 @@ public class TarifasController : ControllerBase
     {
         try
         {
-            // Validação básica
             if (string.IsNullOrEmpty(request.IdContaCorrente) || request.Valor <= 0)
             {
                 return BadRequest(new ErrorResponse
@@ -81,13 +76,10 @@ public class TarifasController : ControllerBase
                 });
             }
 
-            // Gerar ID único para a tarifa
             var idTarifa = Guid.NewGuid().ToString();
             
-            // Criar entidade tarifa
             var tarifa = new Tarifa(idTarifa, request.IdContaCorrente, request.Valor);
             
-            // Salvar no banco
             await _tarifaRepository.SalvarAsync(tarifa);
 
             _logger.LogInformation("Tarifa aplicada: {IdTarifa} - Conta: {IdConta} - Valor: {Valor}", 

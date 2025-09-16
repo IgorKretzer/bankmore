@@ -1,4 +1,3 @@
-// Kafka Consumer comentado por enquanto
 /*
 using BankMore.Tarifas.Domain.Entities;
 using BankMore.Tarifas.Domain.Events;
@@ -37,17 +36,14 @@ public class TransferenciaRealizadaConsumer : IMessageHandler<TransferenciaReali
         {
             _logger.LogInformation("Processando transferência realizada: {IdRequisicao}", message.IdRequisicao);
 
-            // Criar tarifa
             var tarifa = new Tarifa(
                 Guid.NewGuid().ToString(),
                 message.IdContaCorrente,
                 _valorTarifa
             );
 
-            // Salvar tarifa no banco
             await _tarifaRepository.SalvarAsync(tarifa);
 
-            // Publicar evento de tarifa aplicada
             var tarifaAplicadaEvent = new TarifaAplicadaEvent
             {
                 IdContaCorrente = message.IdContaCorrente,

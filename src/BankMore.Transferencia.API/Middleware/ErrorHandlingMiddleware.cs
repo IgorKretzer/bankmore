@@ -23,7 +23,6 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            // Log específico para transferências
             _logger.LogError(ex, "Falha no processamento de transferência - RequestId: {RequestId}", 
                 context.TraceIdentifier);
             await TratarErroTransferencia(context, ex);
@@ -34,7 +33,6 @@ public class ErrorHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
         
-        // Resposta específica para transferências
         var response = new
         {
             error = "Falha no processamento da transferência",
@@ -42,7 +40,6 @@ public class ErrorHandlingMiddleware
             details = exception.Message,
             requestId = context.TraceIdentifier,
             timestamp = DateTime.UtcNow.ToString("O"),
-            // Informações específicas de transferência
             transferOperation = IdentificarOperacaoTransferencia(context.Request.Path)
         };
 
@@ -58,7 +55,6 @@ public class ErrorHandlingMiddleware
 
     private string IdentificarOperacaoTransferencia(string path)
     {
-        // Identificar operação específica de transferência
         if (path.Contains("/efetuar"))
             return "Efetuação de Transferência";
         if (path.Contains("/consultar"))

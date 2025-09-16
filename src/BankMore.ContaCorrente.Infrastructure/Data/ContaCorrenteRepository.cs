@@ -47,11 +47,6 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
 
     public async Task<ContaCorrenteEntity?> ObterPorCpfAsync(string cpf)
     {
-        // IMPLEMENTAÇÃO TEMPORÁRIA: usando CPF como parte do nome
-        // Decisão: Para simplificar o modelo de dados, estou armazenando CPF no campo Nome
-        // Em produção real, teria uma tabela separada para dados pessoais (CPF, RG, etc.)
-        // e uma foreign key para a tabela de contas
-        // TODO: Refatorar para ter tabela de dados pessoais separada
         
         const string sql = @"
             SELECT IdContaCorrente, Numero, Nome, Ativo, Senha, Salt 
@@ -66,9 +61,6 @@ public class ContaCorrenteRepository : IContaCorrenteRepository
 
     public async Task<int> ObterProximoNumeroContaAsync()
     {
-        // Geração de número sequencial - pode ter problemas de concorrência
-        // Em produção, usaria uma tabela de sequências ou UUID
-        // Para este teste, funciona porque não há alta concorrência
         const string sql = "SELECT COALESCE(MAX(Numero), 0) + 1 FROM contacorrente";
 
         using var connection = new SqliteConnection(_connectionString);

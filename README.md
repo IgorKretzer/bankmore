@@ -1,218 +1,192 @@
-# BankMore - Banco Digital
+# BankMore - Sistema Bancário
 
-Sistema de banco digital baseado em microsserviços desenvolvido em .NET 8, seguindo os padrões DDD (Domain-Driven Design) e CQRS (Command Query Responsibility Segregation).
+Olá! Este é o BankMore, um sistema bancário que desenvolvi usando microsserviços em .NET 8. A ideia era criar algo robusto mas simples de entender, seguindo algumas boas práticas como DDD e CQRS.
 
-## Arquitetura
+## Como está organizado
 
-O sistema é composto pelos seguintes microsserviços:
+O projeto tem 3 APIs principais que conversam entre si:
 
-- **API Conta Corrente** (Porta 5001): Gerencia contas correntes, movimentações e saldos
-- **API Transferência** (Porta 5002): Gerencia transferências entre contas
-- **API Tarifas** (Porta 5003): Processa tarifas via Kafka
+- **Conta Corrente** (porta 5001): Aqui ficam as contas, movimentações e consultas de saldo
+- **Transferência** (porta 5002): Cuida das transferências entre contas
+- **Tarifas** (porta 5003): Processa as tarifas automaticamente via Kafka
 
-## Funcionalidades
+## O que cada API faz
 
-### API Conta Corrente
-- ✅ Cadastro de contas correntes
-- ✅ Autenticação via JWT
-- ✅ Inativação de contas
-- ✅ Movimentações (depósitos e saques)
-- ✅ Consulta de saldo
-- ✅ Idempotência para operações
+### Conta Corrente
+Aqui é onde tudo começa - cadastro de contas, login, movimentações básicas. Implementei autenticação JWT e um sistema de idempotência para evitar operações duplicadas (já tive problema com isso antes 😅).
 
-### API Transferência
-- ✅ Transferências entre contas
-- ✅ Validação de saldo
-- ✅ Estorno automático em caso de falha
-- ✅ Comunicação entre microsserviços
-- ✅ Publicação de eventos no Kafka
+### Transferência
+Esta API cuida das transferências entre contas. O legal é que ela valida se tem saldo suficiente e, se algo der errado, faz o estorno automaticamente. Também publica eventos no Kafka para que outras APIs saibam quando uma transferência aconteceu.
 
-### API Tarifas
-- ✅ Consumo de eventos de transferências via Kafka
-- ✅ Aplicação automática de tarifas
-- ✅ Publicação de eventos de tarifas aplicadas
-- ✅ Configuração flexível do valor da tarifa
+### Tarifas
+Esta API fica "escutando" os eventos de transferência e aplica as tarifas automaticamente. Ainda está bem simples, mas a estrutura está pronta para crescer.
 
-## Tecnologias Utilizadas
+## Stack que usei
 
-- **.NET 8**
-- **Dapper** para acesso a dados
-- **SQLite** como banco de dados
-- **JWT** para autenticação
-- **MediatR** para CQRS
-- **Docker** para containerização
-- **Kafka** para comunicação assíncrona
-- **KafkaFlow** para integração com Kafka
+- **.NET 8** - Framework principal
+- **Dapper** - ORM leve para acesso aos dados (não gosto de Entity Framework para tudo)
+- **SQLite** - Banco simples para desenvolvimento (em produção usaria PostgreSQL)
+- **JWT** - Autenticação stateless
+- **MediatR** - Para implementar o padrão CQRS de forma limpa
+- **Docker** - Para facilitar o deploy
+- **Kafka** - Para comunicação assíncrona entre os microsserviços
+- **KafkaFlow** - Biblioteca que facilita a integração com Kafka
 
-## Como Executar
+## Como rodar o projeto
 
-### Pré-requisitos
-- Docker e Docker Compose
-- .NET 8 SDK (para desenvolvimento)
+### O que você precisa
+- Docker e Docker Compose instalados
+- .NET 8 SDK (se quiser rodar localmente)
 
-### Executar com Docker Compose
-
-1. Clone o repositório
-2. Execute o comando:
+### Opção 1: Docker (mais fácil)
 ```bash
+# Clone o repo e rode:
 docker-compose up --build
 ```
 
-### Executar Localmente
-
-1. Navegue até a pasta do projeto
-2. Execute os comandos:
+### Opção 2: Local (para debug)
+Se quiser rodar localmente para debugar, precisa subir cada API em um terminal diferente:
 
 ```bash
-# API Conta Corrente
+# Terminal 1 - Conta Corrente
 cd src/BankMore.ContaCorrente.API
-dotnet run
+ASPNETCORE_URLS=http://localhost:5001 dotnet run
 
-# API Transferência (em outro terminal)
+# Terminal 2 - Transferência  
 cd src/BankMore.Transferencia.API
-dotnet run
+ASPNETCORE_URLS=http://localhost:5002 dotnet run
+
+# Terminal 3 - Tarifas
+cd src/BankMore.Tarifas.API
+ASPNETCORE_URLS=http://localhost:5003 dotnet run
 ```
 
-## Endpoints da API
+## Testando as APIs
 
-### API Conta Corrente (http://localhost:5001)
+### Conta Corrente (http://localhost:5001)
 
-#### Cadastrar Conta
-```http
-POST /api/ContaCorrente/cadastrar
-Content-Type: application/json
-
-{
-  "cpf": "12345678901",
-  "nome": "João Silva",
-  "senha": "123456"
-}
+**Cadastrar uma conta:**
+```bash
+curl -X POST http://localhost:5001/api/ContaCorrente/cadastrar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cpf": "12345678901",
+    "nome": "João Silva", 
+    "senha": "123456"
+  }'
 ```
 
-#### Login
-```http
-POST /api/ContaCorrente/login
-Content-Type: application/json
-
-{
-  "identificacao": "12345678901", // CPF ou número da conta
-  "senha": "123456"
-}
+**Fazer login:**
+```bash
+curl -X POST http://localhost:5001/api/ContaCorrente/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identificacao": "12345678901",
+    "senha": "123456"
+  }'
 ```
 
-#### Consultar Saldo
-```http
-GET /api/ContaCorrente/saldo
-Authorization: Bearer {token}
+**Consultar saldo (precisa do token do login):**
+```bash
+curl -X GET http://localhost:5001/api/ContaCorrente/saldo \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
-#### Realizar Movimentação
-```http
-POST /api/ContaCorrente/movimentar
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "idRequisicao": "unique-id-123",
-  "numeroConta": 1001, // Opcional - se não informado, usa a conta do token
-  "valor": 100.50,
-  "tipoMovimento": "C" // C = Crédito, D = Débito
-}
+**Fazer um depósito:**
+```bash
+curl -X POST http://localhost:5001/api/ContaCorrente/movimentar \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idRequisicao": "dep-001",
+    "valor": 100.50,
+    "tipoMovimento": "C"
+  }'
 ```
 
-#### Inativar Conta
-```http
-POST /api/ContaCorrente/inativar
-Authorization: Bearer {token}
-Content-Type: application/json
+### Transferência (http://localhost:5002)
 
-{
-  "senha": "123456"
-}
+**Transferir dinheiro:**
+```bash
+curl -X POST http://localhost:5002/api/Transferencia/efetuar \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idRequisicao": "trans-001",
+    "numeroContaDestino": 2,
+    "valor": 50.00
+  }'
 ```
 
-### API Transferência (http://localhost:5002)
+### Tarifas (http://localhost:5003)
 
-#### Efetuar Transferência
-```http
-POST /api/Transferencia/efetuar
-Authorization: Bearer {token}
-Content-Type: application/json
+A API de tarifas funciona sozinha - ela "escuta" as transferências e aplica as tarifas automaticamente. Você pode consultar as tarifas aplicadas:
 
-{
-  "idRequisicao": "unique-id-456",
-  "numeroContaDestino": 1002,
-  "valor": 50.00
-}
+```bash
+curl -X GET http://localhost:5003/api/Tarifas/consultar
 ```
 
-### API Tarifas (http://localhost:5003)
-
-A API de Tarifas funciona automaticamente via Kafka, consumindo eventos de transferências realizadas e aplicando tarifas automaticamente.
-
-## Estrutura do Projeto
+## Como o código está organizado
 
 ```
 BankMore/
 ├── src/
-│   ├── BankMore.Shared/                 # Classes compartilhadas
-│   ├── BankMore.ContaCorrente.API/      # API Conta Corrente
-│   ├── BankMore.ContaCorrente.Domain/   # Domínio Conta Corrente
-│   ├── BankMore.ContaCorrente.Infrastructure/ # Infraestrutura Conta Corrente
-│   ├── BankMore.Transferencia.API/      # API Transferência
-│   ├── BankMore.Transferencia.Domain/   # Domínio Transferência
-│   ├── BankMore.Transferencia.Infrastructure/ # Infraestrutura Transferência
-│   ├── BankMore.Tarifas.API/            # API Tarifas
-│   ├── BankMore.Tarifas.Domain/         # Domínio Tarifas
-│   └── BankMore.Tarifas.Infrastructure/ # Infraestrutura Tarifas
-├── tests/                               # Testes unitários
-├── docker-compose.yml                   # Configuração Docker
-└── *.sql                               # Scripts de banco de dados
+│   ├── BankMore.Shared/                 # Classes que uso em todos os projetos
+│   ├── BankMore.ContaCorrente.API/      # API principal
+│   ├── BankMore.ContaCorrente.Domain/   # Regras de negócio
+│   ├── BankMore.ContaCorrente.Infrastructure/ # Acesso a dados
+│   ├── BankMore.Transferencia.API/      # API de transferências
+│   ├── BankMore.Transferencia.Domain/   # Lógica de transferências
+│   ├── BankMore.Transferencia.Infrastructure/ # Integração com outras APIs
+│   ├── BankMore.Tarifas.API/            # API de tarifas
+│   ├── BankMore.Tarifas.Domain/         # Regras de tarifas
+│   └── BankMore.Tarifas.Infrastructure/ # Kafka e persistência
+├── tests/                               # Testes (só alguns por enquanto)
+├── docker-compose.yml                   # Para subir tudo junto
+└── *.sql                               # Scripts para criar as tabelas
 ```
 
-## Padrões Implementados
+## Algumas decisões que tomei
 
 ### DDD (Domain-Driven Design)
-- Entidades de domínio bem definidas
-- Value Objects para conceitos específicos
-- Repositórios para abstração de persistência
-- Handlers para lógica de negócio
+Tentei separar bem as responsabilidades - cada domínio tem suas próprias regras e não depende de outros. Isso facilita manutenção e testes.
 
-### CQRS (Command Query Responsibility Segregation)
-- Commands para operações de escrita
-- Queries para operações de leitura
-- Handlers específicos para cada comando/query
+### CQRS 
+Separei comandos (que modificam dados) de queries (que só leem). O MediatR ajuda muito nisso.
 
 ### Segurança
-- Autenticação JWT
-- Hash de senhas com salt
-- Validação de CPF
-- Headers de autorização obrigatórios
+- JWT para autenticação (sem sessão no servidor)
+- Senhas com hash + salt (nunca salvo em texto)
+- Validação de CPF (básica, mas funciona)
+- Todos os endpoints sensíveis precisam de token
 
 ### Idempotência
-- Chaves de idempotência para operações críticas
-- Cache para melhor performance
-- Prevenção de operações duplicadas
+Implementei um sistema para evitar operações duplicadas - cada operação tem um ID único. Se você tentar fazer a mesma operação duas vezes, só executa uma vez.
 
 ## Testes
 
-Execute os testes com:
+Para rodar os testes:
 ```bash
 dotnet test
 ```
 
+Confesso que não cobri tudo com testes ainda - foquei mais na estrutura. Em um projeto real, testaria mais a fundo.
+
 ## Swagger
 
-Após executar as APIs, acesse:
+Cada API tem sua documentação automática:
 - Conta Corrente: http://localhost:5001/swagger
-- Transferência: http://localhost:5002/swagger
+- Transferência: http://localhost:5002/swagger  
 - Tarifas: http://localhost:5003/swagger
 
-## Considerações de Produção
+## O que mudaria em produção
 
-- Configure HTTPS em produção
-- Use um banco de dados mais robusto (PostgreSQL, SQL Server)
-- Configure logs estruturados
-- Implemente monitoramento e métricas
-- Configure backup do banco de dados
-- Use secrets management para chaves JWT
+- **HTTPS** obrigatório (aqui está HTTP para facilitar testes)
+- **PostgreSQL** ou **SQL Server** no lugar do SQLite
+- **Redis** para cache distribuído
+- **Logs estruturados** com Serilog
+- **Monitoramento** com Application Insights ou similar
+- **Secrets** para chaves JWT (não hardcoded)
+- **Rate limiting** nos endpoints
+- **Health checks** para monitorar as APIs
+

@@ -10,13 +10,13 @@ namespace BankMore.ContaCorrente.Tests.Handlers;
 
 public class CadastrarContaHandlerTests
 {
-    private readonly Mock<IContaCorrenteRepository> _repositoryMock;
-    private readonly CadastrarContaHandler _handler;
+    private readonly Mock<IContaCorrenteRepository> repositoryMock;
+    private readonly CadastrarContaHandler handler;
 
     public CadastrarContaHandlerTests()
     {
-        _repositoryMock = new Mock<IContaCorrenteRepository>();
-        _handler = new CadastrarContaHandler(_repositoryMock.Object);
+        repositoryMock = new Mock<IContaCorrenteRepository>();
+        handler = new CadastrarContaHandler(repositoryMock.Object);
     }
 
     [Fact]
@@ -30,26 +30,26 @@ public class CadastrarContaHandlerTests
             Senha = "123456"
         };
 
-        _repositoryMock.Setup(x => x.ObterPorCpfAsync(It.IsAny<string>()))
+        repositoryMock.Setup(x => x.ObterPorCpfAsync(It.IsAny<string>()))
             .ReturnsAsync((ContaCorrente.Domain.Entities.ContaCorrente?)null);
-        _repositoryMock.Setup(x => x.ObterProximoNumeroContaAsync())
+        repositoryMock.Setup(x => x.ObterProximoNumeroContaAsync())
             .ReturnsAsync(1001);
-        _repositoryMock.Setup(x => x.SalvarAsync(It.IsAny<ContaCorrente.Domain.Entities.ContaCorrente>()))
+        repositoryMock.Setup(x => x.SalvarAsync(It.IsAny<ContaCorrente.Domain.Entities.ContaCorrente>()))
             .Returns(Task.CompletedTask);
 
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        //Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-        // Assert
+        //Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.NumeroConta.Should().Be(1001);
-        _repositoryMock.Verify(x => x.SalvarAsync(It.IsAny<ContaCorrente.Domain.Entities.ContaCorrente>()), Times.Once);
+        repositoryMock.Verify(x => x.SalvarAsync(It.IsAny<ContaCorrente.Domain.Entities.ContaCorrente>()), Times.Once);
     }
 
     [Fact]
     public async Task Handle_ComCpfInvalido_DeveRetornarFalha()
     {
-        // Arrange
+        //Arrange
         var command = new CadastrarContaCommand
         {
             Cpf = "123",
@@ -57,10 +57,10 @@ public class CadastrarContaHandlerTests
             Senha = "123456"
         };
 
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        //Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-        // Assert
+        //Assert
         result.IsFailure.Should().BeTrue();
         result.ErrorType.Should().Be(ErrorTypes.INVALID_DOCUMENT);
     }
@@ -68,7 +68,7 @@ public class CadastrarContaHandlerTests
     [Fact]
     public async Task Handle_ComSenhaInvalida_DeveRetornarFalha()
     {
-        // Arrange
+        //Arrange
         var command = new CadastrarContaCommand
         {
             Cpf = "11144477735", // CPF válido
@@ -76,10 +76,10 @@ public class CadastrarContaHandlerTests
             Senha = "123" // Senha inválida (menos de 6 caracteres)
         };
 
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        //Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-        // Assert
+        //Assert
         result.IsFailure.Should().BeTrue();
         result.ErrorType.Should().Be(ErrorTypes.INVALID_VALUE);
     }

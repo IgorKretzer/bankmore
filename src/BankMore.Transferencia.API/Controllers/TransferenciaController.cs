@@ -64,7 +64,6 @@ public class TransferenciaController : ControllerBase
     }
 }
 
-// DTOs para requests
 public class EfetuarTransferenciaRequest
 {
     public string IdRequisicao { get; set; } = string.Empty;

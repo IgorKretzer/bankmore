@@ -19,7 +19,6 @@ public class IdempotenciaRepository : IIdempotenciaRepository
 
     public async Task<string?> ObterResultadoAsync(string chaveIdempotencia)
     {
-        // Verificar cache primeiro
         if (_cache.TryGetValue(chaveIdempotencia, out string? cachedResult))
         {
             return cachedResult;
@@ -30,7 +29,6 @@ public class IdempotenciaRepository : IIdempotenciaRepository
         using var connection = new SqliteConnection(_connectionString);
         var result = await connection.QueryFirstOrDefaultAsync<string>(sql, new { Chave = chaveIdempotencia });
         
-        // Armazenar no cache por 1 hora
         if (!string.IsNullOrEmpty(result))
         {
             _cache.Set(chaveIdempotencia, result, TimeSpan.FromHours(1));
@@ -53,7 +51,6 @@ public class IdempotenciaRepository : IIdempotenciaRepository
             Resultado = resultado
         });
 
-        // Armazenar no cache
         _cache.Set(chaveIdempotencia, resultado, TimeSpan.FromHours(1));
     }
 }
